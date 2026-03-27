@@ -28,7 +28,7 @@ public class BankingDashboard extends Application {
     private TextArea logArea;
 
     // ===== COLOUR PALETTE =====
-    private static final String PRIMARY_BG      = "#c5d0eb";
+    private static final String PRIMARY_BG      = "#0F172A";
     private static final String CARD_BG         = "#1E293B";
     private static final String CARD_BORDER     = "#334155";
     private static final String ACCENT_BLUE     = "#3B82F6";
@@ -93,14 +93,51 @@ public class BankingDashboard extends Application {
         Button transferBtn = styledButton("⇄  Transfer",  ACCENT_PURPLE, "#7C3AED");
         Button balanceBtn  = styledButton("◎  Balance",   ACCENT_RED,    "#DC2626");
 
-        // ===== ACTIONS (unchanged logic) =====
+        // ===== ACTIONS =====
 
         createBtn.setOnAction(e -> {
             try {
-                int id = Integer.parseInt(idField.getText());
-                String name = nameField.getText();
-                double amount = Double.parseDouble(amountField.getText());
+                // Validate: Account Type
+                if (typeBox.getValue() == null || typeBox.getValue().isEmpty()) {
+                    logError("Please select an account type (Savings or Current).");
+                    return;
+                }
+                // Validate: Account ID
+                if (idField.getText().trim().isEmpty()) {
+                    logError("Account ID is required.");
+                    return;
+                }
+                int id;
+                try {
+                    id = Integer.parseInt(idField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("Account ID must be a valid number.");
+                    return;
+                }
+                // Validate: Full Name
+                if (nameField.getText().trim().isEmpty()) {
+                    logError("Full name is required.");
+                    return;
+                }
+                // Validate: Amount
+                if (amountField.getText().trim().isEmpty()) {
+                    logError("Opening balance amount is required.");
+                    return;
+                }
+                double amount;
+                try {
+                    amount = Double.parseDouble(amountField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("Amount must be a valid number (e.g. 5000).");
+                    return;
+                }
+                if (amount < 0) {
+                    logError("Opening balance cannot be negative.");
+                    return;
+                }
+
                 String type = typeBox.getValue();
+                String name = nameField.getText().trim();
 
                 Account acc = AccountFactory.createAccount(type, id, name, amount);
                 service.createAccount(acc);
@@ -112,14 +149,38 @@ public class BankingDashboard extends Application {
                 clearFields(idField, nameField, amountField);
 
             } catch (Exception ex) {
-                logError(ex.getMessage());
+                logError(friendlyMessage(ex));
             }
         });
 
         depositBtn.setOnAction(e -> {
             try {
-                int id = Integer.parseInt(idField.getText());
-                double amount = Double.parseDouble(amountField.getText());
+                if (idField.getText().trim().isEmpty()) {
+                    logError("Account ID is required to deposit.");
+                    return;
+                }
+                int id;
+                try {
+                    id = Integer.parseInt(idField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("Account ID must be a valid number.");
+                    return;
+                }
+                if (amountField.getText().trim().isEmpty()) {
+                    logError("Please enter the amount to deposit.");
+                    return;
+                }
+                double amount;
+                try {
+                    amount = Double.parseDouble(amountField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("Amount must be a valid number (e.g. 1000).");
+                    return;
+                }
+                if (amount <= 0) {
+                    logError("Deposit amount must be greater than zero.");
+                    return;
+                }
 
                 service.deposit(id, amount);
 
@@ -130,14 +191,38 @@ public class BankingDashboard extends Application {
                 clearFields(amountField);
 
             } catch (Exception ex) {
-                logError(ex.getMessage());
+                logError(friendlyMessage(ex));
             }
         });
 
         withdrawBtn.setOnAction(e -> {
             try {
-                int id = Integer.parseInt(idField.getText());
-                double amount = Double.parseDouble(amountField.getText());
+                if (idField.getText().trim().isEmpty()) {
+                    logError("Account ID is required to withdraw.");
+                    return;
+                }
+                int id;
+                try {
+                    id = Integer.parseInt(idField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("Account ID must be a valid number.");
+                    return;
+                }
+                if (amountField.getText().trim().isEmpty()) {
+                    logError("Please enter the amount to withdraw.");
+                    return;
+                }
+                double amount;
+                try {
+                    amount = Double.parseDouble(amountField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("Amount must be a valid number (e.g. 1000).");
+                    return;
+                }
+                if (amount <= 0) {
+                    logError("Withdrawal amount must be greater than zero.");
+                    return;
+                }
 
                 service.withdraw(id, amount);
 
@@ -148,15 +233,52 @@ public class BankingDashboard extends Application {
                 clearFields(amountField);
 
             } catch (Exception ex) {
-                logError(ex.getMessage());
+                logError(friendlyMessage(ex));
             }
         });
 
         transferBtn.setOnAction(e -> {
             try {
-                int from = Integer.parseInt(fromField.getText());
-                int to   = Integer.parseInt(toField.getText());
-                double amount = Double.parseDouble(amountField.getText());
+                if (fromField.getText().trim().isEmpty()) {
+                    logError("Source account ID (From) is required.");
+                    return;
+                }
+                if (toField.getText().trim().isEmpty()) {
+                    logError("Destination account ID (To) is required.");
+                    return;
+                }
+                int from, to;
+                try {
+                    from = Integer.parseInt(fromField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("From Account ID must be a valid number.");
+                    return;
+                }
+                try {
+                    to = Integer.parseInt(toField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("To Account ID must be a valid number.");
+                    return;
+                }
+                if (from == to) {
+                    logError("Source and destination accounts cannot be the same.");
+                    return;
+                }
+                if (amountField.getText().trim().isEmpty()) {
+                    logError("Please enter the amount to transfer.");
+                    return;
+                }
+                double amount;
+                try {
+                    amount = Double.parseDouble(amountField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("Amount must be a valid number (e.g. 1000).");
+                    return;
+                }
+                if (amount <= 0) {
+                    logError("Transfer amount must be greater than zero.");
+                    return;
+                }
 
                 service.transfer(from, to, amount);
 
@@ -168,13 +290,24 @@ public class BankingDashboard extends Application {
                 clearFields(fromField, toField, amountField);
 
             } catch (Exception ex) {
-                logError(ex.getMessage());
+                logError(friendlyMessage(ex));
             }
         });
 
         balanceBtn.setOnAction(e -> {
             try {
-                int id = Integer.parseInt(idField.getText());
+                if (idField.getText().trim().isEmpty()) {
+                    logError("Account ID is required to check balance.");
+                    return;
+                }
+                int id;
+                try {
+                    id = Integer.parseInt(idField.getText().trim());
+                } catch (NumberFormatException ex) {
+                    logError("Account ID must be a valid number.");
+                    return;
+                }
+
                 double balance = service.getBalance(id);
 
                 log("◎  BALANCE ENQUIRY");
@@ -182,7 +315,7 @@ public class BankingDashboard extends Application {
                 logDivider();
 
             } catch (Exception ex) {
-                logError(ex.getMessage());
+                logError(friendlyMessage(ex));
             }
         });
 
@@ -234,6 +367,41 @@ public class BankingDashboard extends Application {
         stage.setTitle("NexBank — Banking System");
         stage.setScene(scene);
         stage.show();
+    }
+
+    // ===== FRIENDLY ERROR MESSAGE TRANSLATOR =====
+    private String friendlyMessage(Exception ex) {
+        if (ex == null || ex.getMessage() == null) {
+            return "An unexpected error occurred. Please try again.";
+        }
+        String msg = ex.getMessage().toLowerCase();
+
+        if (msg.contains("account") && (msg.contains("not found") || msg.contains("null") || msg.contains("does not exist"))) {
+            return "Account not found. Please check the Account ID and try again.";
+        }
+        if (msg.contains("insufficient") || msg.contains("balance") && msg.contains("low")) {
+            return "Insufficient funds. The account does not have enough balance for this transaction.";
+        }
+        if (msg.contains("equalsignorecase") || msg.contains("<parameter") || msg.contains("nullpointerexception") || msg.contains("null")) {
+            return "Please fill in all required fields before proceeding.";
+        }
+        if (msg.contains("numberformat") || msg.contains("for input string")) {
+            return "Invalid input. Please enter a valid numeric value.";
+        }
+        if (msg.contains("duplicate") || msg.contains("already exists")) {
+            return "An account with this ID already exists. Please use a different Account ID.";
+        }
+        if (msg.contains("negative") || msg.contains("must be positive")) {
+            return "Amount must be a positive value greater than zero.";
+        }
+        if (msg.contains("same account") || msg.contains("self transfer")) {
+            return "Transfer failed. Source and destination accounts cannot be the same.";
+        }
+        if (msg.contains("connection") || msg.contains("database") || msg.contains("timeout")) {
+            return "Service temporarily unavailable. Please try again shortly.";
+        }
+        // Fallback — return a cleaned-up version, not the raw Java exception
+        return "Operation failed. Please verify your inputs and try again.";
     }
 
     // ===== HEADER =====
@@ -370,7 +538,7 @@ public class BankingDashboard extends Application {
     }
 
     private void logError(String message) {
-        logArea.appendText("✘  ERROR: " + (message != null ? message.toUpperCase() : "UNKNOWN") + "\n");
+        logArea.appendText("✘  " + message + "\n");
         logDivider();
     }
 
@@ -399,7 +567,7 @@ public class BankingDashboard extends Application {
             log("    └─────────────────────────────────────────");
 
         } catch (Exception e) {
-            log("    ✘  Could not fetch transactions for ID: " + id);
+            logError("Could not retrieve transaction history for Account ID: " + id + ".");
         }
     }
 
